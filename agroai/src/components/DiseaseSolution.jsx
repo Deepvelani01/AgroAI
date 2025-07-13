@@ -134,7 +134,7 @@ function DiseaseSolution() {
   const handleBackToDetection = () => {
     // Navigate back to the DiseaseDetection page
     // You might want to pass back the crop and image if you want to retain state
-    navigate('/DiseaseDetection');
+    navigate('/Home');
   };
 
   return (
