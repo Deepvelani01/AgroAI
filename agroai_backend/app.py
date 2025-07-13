@@ -17,7 +17,7 @@ CORS(app, resources={r"/*": {"origins": "*"}}) # Allow all origins for developme
 basedir = os.path.abspath(os.path.dirname(__file__))
 # Configure the SQLite database URI
 # The database file will be named 'agroai.db' and will be in the same directory as this script
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'agroai.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.join(basedir, 'agroai.db')
 # Suppress a warning that will be shown in the console (recommended setting)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
