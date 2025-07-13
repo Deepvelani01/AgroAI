@@ -30,7 +30,7 @@ export default function Register() {
     setMessage('')
 
     try {
-      const response = await fetch('https://agroai-wc3b.onrender.com/register',{
+      const response = await fetch('https://agroai-wc39.onrender.com/register',{
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

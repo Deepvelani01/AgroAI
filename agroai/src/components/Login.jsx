@@ -26,7 +26,7 @@ const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('')
     try {
-      const response = await fetch('https://agroai-wc3b.onrender.com/login', {
+      const response = await fetch('https://agroai-wc39.onrender.com/login', {
         method:'POST',
         headers: {
           'Content-Type': 'application/json',
