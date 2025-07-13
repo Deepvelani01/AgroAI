@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os # To help with path for database file
 from flask_cors import CORS # This will be used in a later step (Step 3/4)
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity
+from flask_bcrypt import Bcrypt
 app = Flask(__name__)
 
 # --- CORS Configuration (for future frontend connection) ---
@@ -26,6 +27,9 @@ jwt = JWTManager(app)
 
 # Initialize the SQLAlchemy database object
 db = SQLAlchemy(app)
+
+bcrypt = Bcrypt(app)
+CORS(app)
 
 # --- User Model Definition ---
 # This defines the structure of our 'users' table in the database
@@ -68,6 +72,13 @@ def register():
     new_user.set_password(password)
     db.session.add(new_user)
     db.session.commit()
+
+    with app.app_context():
+        try:
+            db.create_all()
+            print("Database tables created/checked successfully on startup.")
+        except Exception as e:
+            print(f"Error creating/checking database tables on startup: {e}")
 
     return jsonify({"message": "User registered successfully!"}), 201
 
