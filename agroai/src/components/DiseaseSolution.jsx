@@ -132,9 +132,10 @@ function DiseaseSolution() {
   const solution = solutionsData[disease] || solutionsData['Unknown'];
 
   const handleBackToDetection = () => {
+    console.log('trying to nevigate')
     // Navigate back to the DiseaseDetection page
     // You might want to pass back the crop and image if you want to retain state
-    navigate('/Home');
+    navigate('/DiseaseDetection');
   };
 
   return (
