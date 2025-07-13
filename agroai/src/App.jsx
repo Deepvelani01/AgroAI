@@ -24,9 +24,9 @@ function App() {
                 <Home />
             </ProtectedRoute>} />
           <Route path="/DiseaseDetection" element={
-              
+              <ProtectedRoute>
                 <DiseaseDetection />
-             
+              </ProtectedRoute>
               } />
            <Route path="/DiseaseSolution" element={
               <ProtectedRoute>
