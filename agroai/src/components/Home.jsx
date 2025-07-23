@@ -1,199 +1,120 @@
-// import React, { useState, useEffect } from "react";
-// import * as tf from "@tensorflow/tfjs";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import backgroundImage from '../assets/background1.jpg';
+import stockManagementImage from '../assets/stock_management.png';
+import taskManagementImage from '../assets/taskmanage.png';
+import weatherImage from '../assets/weather.png';
+import profile from '../assets/profile1.png';
+import AgroaiImage from '../assets/Agroai.png';
+import scanPlantImage from '../assets/scanplant.png';
 
-// function Home() {
-//   const [model, setModel] = useState(null);
-//   const [imageURL, setImageURL] = useState(null);
-//   const [prediction, setPrediction] = useState(null);
-//   const [topPrediction, setTopPrediction] = useState(null);
+const Icon = ({ src, alt }) => (
+  <img src={src} alt={alt} className="w-16 h-16 object-contain" />
+);
 
-//   const diseaseLabels = [
-//     "Anthracnose",
-//     "Bacterial Canker",
-//     "Cutting Weevil",
-//     "Die Back",
-//     "Gall Midge",
-//     "Healthy",
-//     "Powdery Mildew",
-//     "Scab",
-//     "Tracin"
-//   ];
-
-//   useEffect(() => {
-//     const loadModel = async () => {
-//       try {
-//         const loadedModel = await tf.loadGraphModel("/tfjs_model_output/model.json");
-//         setModel(loadedModel);
-//         console.log("✅ Model loaded successfully");
-//       } catch (error) {
-//         console.error("❌ Error loading model:", error);
-//       }
-//     };
-
-//     loadModel();
-//   }, []);
-
-//   const handleImageUpload = (e) => {
-//     const file = e.target.files[0];
-//     const imageUrl = URL.createObjectURL(file);
-//     setImageURL(imageUrl);
-//     setPrediction(null);
-//     setTopPrediction(null);
-//   };
-
-//   const predict = async () => {
-//     if (!model || !imageURL) return;
-
-//     const img = document.getElementById("input-image");
-
-//     const tensor = tf.browser
-//       .fromPixels(img)
-//       .resizeNearestNeighbor([242, 242])
-//       .toFloat()
-//       .div(255.0)
-//       .expandDims();
-
-//     const predictionTensor = model.predict(tensor);
-//     const predictionData = await predictionTensor.data();
-
-//     const resultArray = Array.from(predictionData);
-//     setPrediction(resultArray);
-
-//     const maxIndex = resultArray.indexOf(Math.max(...resultArray));
-//     setTopPrediction({
-//       label: diseaseLabels[maxIndex],
-//       confidence: (resultArray[maxIndex] * 100).toFixed(2) + "%"
-//     });
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100 py-10 px-4 text-center">
-//       <h1 className="text-4xl font-bold text-green-800 mb-6">Detect The Disease Of Mango </h1>
-
-//       <div className="max-w-xl mx-auto bg-white shadow-lg rounded-2xl p-6">
-//         <input
-//           type="file"
-//           accept="image/*"
-//           onChange={handleImageUpload}
-//           className="block w-full mb-4 text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-//         />
-
-//         {imageURL && (
-//           <div>
-//             <img
-//               id="input-image"
-//               src={imageURL}
-//               alt="Uploaded"
-//               className="w-64 mx-auto rounded-lg shadow-md"
-//             />
-//             <button
-//               onClick={predict}
-//               className="mt-4 px-6 py-2 bg-green-600 text-white rounded-full hover:bg-green-700"
-//             >
-//               Detect Disease
-//             </button>
-//           </div>
-//         )}
-
-//         {topPrediction && (
-//           <div className="mt-6 bg-green-50 p-4 rounded-xl shadow-inner">
-//             <h3 className="text-xl font-semibold text-green-800">🔍 Predicted Disease:</h3>
-//             <p className="text-lg text-green-700 font-bold">
-//               {topPrediction.label} ({topPrediction.confidence})
-//             </p>
-//           </div>
-//         )}
-
-//         {prediction && (
-//           <div className="mt-4 text-left">
-//             <h4 className="text-green-800 font-semibold">📊 Confidence Levels:</h4>
-//             <ul className="mt-2 space-y-1">
-//               {prediction.map((val, idx) => (
-//                 <li key={idx} className="text-sm text-gray-800">
-//                   {diseaseLabels[idx]}: {(val * 100).toFixed(2)}%
-//                 </li>
-//               ))}
-//             </ul>
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default Home;
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import '../index.css'; // Assuming you have some global styles
-
-function Home() {
-  const [selectedCrop, setSelectedCrop] = useState('');
-  const navigate = useNavigate();
-
-  // Example list of crops (hardcoded for frontend-only)
-  const availableCrops = [
-    
-    'Cotton',
-    'Potatoes',
-    'Mango', // Added Mango
-  ];
-
-  const handleCropChange = (event) => {
-    setSelectedCrop(event.target.value);
-  };
-
-  const handleProceedDetection = () => {
-    if (selectedCrop) {
-      // Navigate to the DiseaseDetection page, passing the selected crop as state
-      navigate('/DiseaseDetection', { state: { crop: selectedCrop } });
-    } else {
-      alert("Please select a crop first!");
-    }
-  };
+const Home = () => {
+  const userName = "Farmer John";
+  const userLocation = "Rajkot, Gujarat";
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-100 p-4">
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-center text-green-700">AgroAI Crop Detection</h1>
-        <p className="mb-6 text-center text-gray-600">Select a crop to proceed with disease detection:</p>
-
-        <div className="mb-6">
-          <label htmlFor="crop-select" className="block text-lg font-medium text-gray-700 mb-2">
-            Choose a Crop:
-          </label>
-          <select
-            id="crop-select"
-            value={selectedCrop}
-            onChange={handleCropChange}
-            className="mt-1 block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-lg"
-          >
-            <option value="" disabled>-- Select a crop --</option>
-            {availableCrops.map((crop, index) => (
-              <option key={index} value={crop}>
-                {crop}
-              </option>
-            ))}
-          </select>
+    <div
+      className="min-h-screen flex flex-col bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url(${backgroundImage})` }}
+    >
+      {/* Header */}
+          <header className="bg-white/10 backdrop-blur-lg shadow-md flex justify-between items-center p-4">
+        <img src={AgroaiImage} alt="AgroAI Logo" className="h-20 ml-2" />
+        <div className="flex items-center space-x-6">
+          <nav className="flex space-x-6">
+            <Link to="/about" className="text-white hover:underline text-md">About</Link>
+            <Link to="/contact" className="text-white hover:underline text-md">Contact</Link>
+            <Link to="/weather" className="text-white hover:underline text-md">Weather</Link>
+            <Link to="/tasks" className="text-white hover:underline text-md">Tasks</Link>
+          </nav>
+          <Link to="/profile" className="hover:bg-agro-green-dark rounded-full p-1 transition-colors">
+            <Icon src={profile} alt="User Profile" />
+          </Link>
         </div>
+      </header>
+           {/* Welcome Section */}
+          <div className="text-center mt-8 text-white">
+            <h1 className="text-3xl font-bold">Welcome, {userName}</h1>
+            <p className="text-lg text-green-100">Location: {userLocation}</p>
+          </div>
 
-        <button
-          onClick={handleProceedDetection}
-          disabled={!selectedCrop}
-          className={`w-full p-3 rounded-lg text-white font-semibold text-lg transition ${
-            selectedCrop ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
-          }`}
-        >
-          Proceed to Detection
-        </button>
+      
 
-        {selectedCrop && (
-          <p className="mt-6 text-center text-gray-700">
-            You selected: <span className="font-bold text-green-600">{selectedCrop}</span>
-          </p>
-        )}
-      </div>
+      {/* Main Content */}
+      <main className="flex-grow p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto mt-10">
+        
+        {/* Cards */}
+        {[
+          {
+            icon: weatherImage,
+            title: "Weather Report",
+            text: "Current: 30°C, Sunny",
+            extra: `Location: ${userLocation}`,
+            link: "/weather",
+            cta: "View Details"
+          },
+          {
+            icon: scanPlantImage,
+            title: "Scan Plant",
+            text: "Identify diseases & pests.",
+            link: "/SelectCrop",
+            cta: "Start Scan"
+          },
+          {
+            icon: taskManagementImage,
+            title: "Task Management",
+            text: "Upcoming: Irrigate Field 1 (Tomorrow)",
+            link: "/tasks",
+            cta: "View All Tasks"
+          },
+          {
+            icon: stockManagementImage,
+            title: "Stock Management",
+            text: "Fertilizer: Low (10 bags)",
+            link: "/stock",
+            cta: "Manage Stock"
+          }
+        ].map((card, index) => (
+          <div
+            key={index}
+            className="bg-white/80 backdrop-blur-md border border-green-200 p-6 rounded-2xl shadow-lg flex flex-col items-center text-center hover:scale-105 transition-transform"
+          >
+            <Icon src={card.icon} alt={card.title} />
+            <h2 className="text-xl font-bold mt-4 text-green-800">{card.title}</h2>
+            <p className="text-gray-700 text-sm mt-2">{card.text}</p>
+            {card.extra && <p className="text-gray-600 text-sm">{card.extra}</p>}
+            <Link
+              to={card.link}
+              className="mt-4 text-green-700 font-medium hover:underline"
+            >
+              {card.cta}
+            </Link>
+          </div>
+        ))}
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white/80 backdrop-blur-sm text-gray-700 p-6 mt-12 text-center shadow-inner">
+        <div className="flex flex-col items-center mb-4">
+          <img src={AgroaiImage} alt="Footer Logo" className="w-20 object-contain mb-2" />
+        </div>
+        <p className="text-sm text-gray-500">
+          Empowering farmers with AI-driven insights for smarter agriculture.
+          <br />
+          &copy; {new Date().getFullYear()} AgroAI. All rights reserved.
+        </p>
+        <div className="flex justify-center mt-3 space-x-6 text-gray-600 text-sm">
+          <Link to="/about" className="hover:text-green-700">About Us</Link>
+          <Link to="/contact" className="hover:text-green-700">Contact</Link>
+          <Link to="/privacy" className="hover:text-green-700">Privacy Policy</Link>
+        </div>
+      </footer>
     </div>
   );
-}
+};
 
 export default Home;

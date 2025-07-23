@@ -9,6 +9,7 @@ import DiseaseDetection from './components/DiseaseDetection'
 import { AuthProvider } from './components/AuthContext'; // Import AuthProvider
 import ProtectedRoute from './components/ProtectedRoute';
 import DiseaseSolution from './components/DiseaseSolution'
+import SelectCrop from './components/selectCrop'
 function App() {
   
 
@@ -31,9 +32,16 @@ function App() {
            <Route path="/DiseaseSolution" element={
               <ProtectedRoute>
                 <DiseaseSolution />
-              </ProtectedRoute>
-              } />
-        </Routes>
+              </ProtectedRoute>} 
+
+            />
+            <Route path="/selectCrop" element={
+              <ProtectedRoute>
+                  <SelectCrop />
+              </ProtectedRoute>} 
+
+            />
+          </Routes>
       </AuthProvider>
      
     </>

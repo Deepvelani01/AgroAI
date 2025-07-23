@@ -1,7 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import * as tf from '@tensorflow/tfjs'; // Import TensorFlow.js
-import '../index.css'; // Assuming you have some global styles
+// import '../index.css'; // Removed: Assuming global styles are handled elsewhere (e.g., in main.jsx or index.html)
+
+// Custom Message Modal Component
+const MessageModal = ({ message, onClose }) => {
+  if (!message) return null;
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
+        <h3 className="text-xl font-semibold mb-4 text-gray-800">Notification</h3>
+        <p className="text-gray-700 mb-6">{message}</p>
+        <button
+          onClick={onClose}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors"
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  );
+};
 
 function DiseaseDetection() {
   const location = useLocation();
@@ -14,6 +34,7 @@ function DiseaseDetection() {
   const [loading, setLoading] = useState(false);
   const [modelLoading, setModelLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [message, setMessage] = useState(null); // State for custom messages
 
   // useRef to store the loaded model, so it persists across re-renders
   const modelRef = useRef(null);
@@ -22,32 +43,37 @@ function DiseaseDetection() {
 
   // Define model paths and corresponding labels
   // IMPORTANT: Adjust these paths and labels to match your actual models!
+  // Ensure your model files (model.json and .bin files) are placed in the 'public' folder
+  // relative to these paths. For example, for Mango, the files should be in `public/mango/`.
   const cropModelInfo = {
     'Mango': {
-      path: '/mango/model.json',
-      labels: ["Anthracnose",
-    "Bacterial Canker",
-    "Cutting Weevil",
-    "Die Back",
-    "Gall Midge",
-    "Healthy",
-    "Powdery Mildew",
-    "Scab",
-    "Tracin"] // Example labels
+      path: 'models/mango/model.json',
+      type: 'graph',
+      inputSize:242,
+      labels: ["Anthracnose", "Bacterial Canker", "Cutting Weevil", "Die Back", "Gall Midge", "Healthy", "Powdery Mildew", "Scab", "Tracin"] // Example labels
     },
-    'Potato': {
-      path: '/models/potato/model.json',
-      labels: ['Healthy', 'Early Blight', 'Late Blight'] // Example labels
+    'Potatoes': {
+      path: 'models/potato/model.json',
+      type: 'layers',
+      inputSize:256,
+      labels: ['Early Blight','Late Blight', 'Healthy'] // Example labels
     },
     'Groundnut': {
-      path: '/models/groundnut/model.json',
+      path: '/models/groundnut/model.json', // Assuming /public/models/groundnut/
+      type: 'graph',
       labels: ['Healthy', 'Early Leaf Spot', 'Late Leaf Spot', 'Rust'] // Example labels
     },
     'Cotton': {
-      path: '/models/cotton/model.json',
+      path: '/models/cotton/model.json', // Assuming /public/models/cotton/
+      type: 'graph',
       labels: ['Healthy', 'Bacterial Blight', 'Fusarium Wilt'] // Example labels
     },
     // Add more crops as needed
+  };
+
+  // Function to show a custom message
+  const showMessage = (msg) => {
+    setMessage(msg);
   };
 
   // Effect to load the TF.js model when the component mounts or selectedCrop changes
@@ -66,13 +92,19 @@ function DiseaseDetection() {
 
       try {
         console.log(`Loading model for ${selectedCrop} from ${modelInfo.path}...`);
-        const loadedModel = await tf.loadGraphModel(modelInfo.path); // Use loadGraphModel for Keras-converted models
+        // Use tf.loadGraphModel for Graph Models (SavedModel/Keras H5 converted to TF.js Graph Model)
+        const loadedModel = modelInfo.type === 'graph'
+          ? await tf.loadGraphModel(modelInfo.path)
+          : await tf.loadLayersModel(modelInfo.path);
+
+
+        
         modelRef.current = loadedModel;
         labelsRef.current = modelInfo.labels;
         console.log(`Model for ${selectedCrop} loaded successfully.`);
       } catch (err) {
         console.error('Error loading model:', err);
-        setError(`Failed to load model for ${selectedCrop}. Please check the model path and files.`);
+        setError(`Failed to load model for ${selectedCrop}. Please ensure the model files (model.json and .bin files) are correctly placed in the 'public' folder relative to the specified path.`);
       } finally {
         setModelLoading(false);
       }
@@ -111,6 +143,7 @@ function DiseaseDetection() {
       setSelectedImage(event.target.files[0]);
       setDetectionResult(null); // Clear previous results
       setError(null); // Clear previous errors
+      setMessage(null); // Clear any previous messages
     } else {
       setSelectedImage(null);
       setImagePreview(null);
@@ -119,28 +152,31 @@ function DiseaseDetection() {
 
   // Function to preprocess the image for the model
   // IMPORTANT: You MUST adjust this function based on your model's exact input requirements!
+  // This includes resize dimensions, normalization, and channel order (RGB/BGR).
   const preprocessImage = (imageElement) => {
-    // Example: Resize to 224x224 and normalize to [0, 1]
-    return tf.browser.fromPixels(imageElement)
-      .resizeNearestNeighbor([242, 242]) // Resize to model's expected input size
-      .toFloat() // Convert to float
-      .div(tf.scalar(255)) // Normalize pixel values to 0-1
-      .expandDims(); // Add a batch dimension (e.g., from [224, 224, 3] to [1, 224, 224, 3])
-  };
+  const inputSize = cropModelInfo[selectedCrop]?.inputSize || 224; // fallback default
+  return tf.browser.fromPixels(imageElement)
+    .resizeNearestNeighbor([inputSize, inputSize])
+    .toFloat()
+    .div(tf.scalar(255))
+    .expandDims(); // [1, inputSize, inputSize, 3]
+};
+
 
   const handleDetectDisease = async () => {
     if (!selectedImage) {
-      alert('Please upload an image first!');
+      showMessage('Please upload an image first!');
       return;
     }
     if (!modelRef.current) {
-      alert('Model is not loaded yet. Please wait or try again.');
+      showMessage('Model is not loaded yet. Please wait or try again.');
       return;
     }
 
     setLoading(true);
     setDetectionResult(null);
     setError(null);
+    setMessage(null);
 
     try {
       const img = new Image();
@@ -189,7 +225,7 @@ function DiseaseDetection() {
         });
       };
       img.onerror = () => {
-        throw new Error("Failed to load image for processing.");
+        throw new Error("Failed to load image for processing. Please ensure the image is valid.");
       };
     } catch (err) {
       console.error('Error during detection:', err);
@@ -200,25 +236,26 @@ function DiseaseDetection() {
   };
 
   const handleBackToHome = () => {
-    navigate('/Home'); // Navigate back to the Home page
+    navigate('/SelectCrop'); // Navigate back to the Home page
   };
 
-  const handleViewSolution = () =>{
-    if (detectionResult && detectionResult.disease !== 'Healthy'){
-        navigate('/DiseaseSolution',{
-          state:{
-            crop: selectedCrop,
-            disease: detectionResult.disease,
-          }
-        });
-    } else if (detectionResult && detectionResult.disease == 'Healthy'){
-      alert("Your crop is healthy! No specific treatment plan needed.");
-    } else{
-      alert("Please detect a disease first");
+  const handleViewSolution = () => {
+    if (detectionResult && detectionResult.disease !== 'Healthy') {
+      navigate('/DiseaseSolution', {
+        state: {
+          crop: selectedCrop,
+          disease: detectionResult.disease,
+        }
+      });
+    } else if (detectionResult && detectionResult.disease === 'Healthy') {
+      showMessage("Your crop is healthy! No specific treatment plan needed.");
+    } else {
+      showMessage("Please detect a disease first.");
     }
   };
+
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-100 p-4">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-100 p-4 font-sans">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg">
         <h1 className="text-3xl font-bold mb-4 text-center text-green-700">
           Disease Detection for <span className="text-blue-600">{selectedCrop}</span>
@@ -228,7 +265,9 @@ function DiseaseDetection() {
         </p>
 
         {modelLoading && (
-          <div className="text-center text-blue-600 mb-4">Loading model... This might take a moment.</div>
+          <div className="text-center text-blue-600 mb-4 p-2 bg-blue-50 rounded-md">
+            Loading model... This might take a moment.
+          </div>
         )}
         {error && (
           <div className="text-center text-red-600 mb-4 p-2 border border-red-300 bg-red-50 rounded-md">
@@ -251,7 +290,7 @@ function DiseaseDetection() {
                        file:rounded-full file:border-0
                        file:text-sm file:font-semibold
                        file:bg-green-50 file:text-green-700
-                       hover:file:bg-green-100"
+                       hover:file:bg-green-100 cursor-pointer"
           />
         </div>
 
@@ -261,7 +300,7 @@ function DiseaseDetection() {
             <img
               src={imagePreview}
               alt="Preview"
-              className="max-w-full h-auto rounded-lg shadow-md border border-gray-200"
+              className="max-w-full h-auto rounded-lg shadow-md border border-gray-200 object-contain"
               style={{ maxHeight: '300px' }}
             />
           </div>
@@ -272,7 +311,7 @@ function DiseaseDetection() {
           disabled={!selectedImage || loading || modelLoading || error}
           className={`w-full p-3 rounded-lg text-white font-semibold text-lg transition mb-4 ${
             (selectedImage && !loading && !modelLoading && !error) ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'
-          }`}
+          } shadow-md hover:shadow-lg`}
         >
           {loading ? 'Detecting...' : 'Detect Disease'}
         </button>
@@ -280,13 +319,13 @@ function DiseaseDetection() {
         {detectionResult && (
           <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200 shadow-sm">
             <h3 className="text-xl font-bold text-green-800 mb-2">Detection Result:</h3>
-            <p className="text-gray-800">
+            <p className="text-gray-800 mb-1">
               <span className="font-semibold">Disease:</span> {detectionResult.disease}
             </p>
-            <p className="text-gray-800">
+            <p className="text-gray-800 mb-1">
               <span className="font-semibold">Confidence:</span> {detectionResult.confidence}
             </p>
-            <p className="text-gray-800">
+            <p className="text-gray-800 mb-1">
               <span className="font-semibold">Symptoms:</span> {detectionResult.symptoms}
             </p>
             <p className="text-gray-800">
@@ -295,7 +334,7 @@ function DiseaseDetection() {
             {detectionResult.disease !== 'Healthy' && (
               <button
                 onClick={handleViewSolution}
-                className="mt-4 w-full p-2 rounded-lg bg-purple-600 text-white font-semibold text-md hover:bg-purple-700 transition"
+                className="mt-4 w-full p-2 rounded-lg bg-purple-600 text-white font-semibold text-md hover:bg-purple-700 transition shadow-md hover:shadow-lg"
               >
                 View Treatment Plan
               </button>
@@ -305,11 +344,13 @@ function DiseaseDetection() {
 
         <button
           onClick={handleBackToHome}
-          className="mt-6 w-full p-3 rounded-lg bg-gray-300 text-gray-800 font-semibold text-lg hover:bg-gray-400 transition"
+          className="mt-6 w-full p-3 rounded-lg bg-gray-300 text-gray-800 font-semibold text-lg hover:bg-gray-400 transition shadow-md hover:shadow-lg"
         >
           Back to Crop Selection
         </button>
       </div>
+
+      <MessageModal message={message} onClose={() => setMessage(null)} />
     </div>
   );
 }
